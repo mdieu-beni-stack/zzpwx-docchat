@@ -193,7 +193,18 @@ def _get_file_hashes(uploaded_files: List) -> frozenset:
     """Generate SHA-256 hashes for uploaded files."""
     hashes = set()
     for file in uploaded_files:
-        with open(file.name, "rb") as f:
+        # Support both Gradio file-like objects (have a `name` attribute)
+        # and plain file path strings.
+        if isinstance(file, str):
+            path = file
+        else:
+            path = getattr(file, "name", None)
+
+        if not path:
+            # Skip entries we can't resolve to a path
+            continue
+
+        with open(path, "rb") as f:
             hashes.add(hashlib.sha256(f.read()).hexdigest())
     return frozenset(hashes)
 
